@@ -1,10 +1,4 @@
-import axios, {
-  AxiosResponse,
-  AxiosRequestConfig,
-  RawAxiosRequestHeaders,
-  Axios,
-  isAxiosError,
-} from "axios";
+import axios, { AxiosResponse, isAxiosError } from "axios";
 
 enum StatusText {}
 
@@ -34,7 +28,7 @@ enum Network {}
 
 enum Role {}
 
-interface SuccessResponce {
+interface SuccessResponse {
   status: number;
   statusText: StatusText;
   headers: {};
@@ -108,21 +102,32 @@ interface User {
   role: Role;
 }
 
-interface SuccessResponce {
+interface SuccessResponse {
   users: User[];
   total: number;
   skip: number;
   limit: number;
 }
 
+function isSuccessResponse(response: any): response is SuccessResponse {
+  const requiredKeys = ["users", "total", "skip", "limit"];
+  return (
+    response &&
+    requiredKeys.every((key) => key in response) &&
+    Array.isArray(response.users)
+  );
+}
+
 axios
   .get("https://dummyjson.com/users")
-  .then((response) => {
-    const r = response.data as SuccessResponce;
-    console.log(r.users);
+  .then((response: AxiosResponse<any>) => {
+    if (isSuccessResponse(response.data)) {
+      console.log(response.data.users);
+    } else console.log("Неизвестная структура ответа: ", response.data);
   })
-  .catch((error) => {
+  .catch((error: unknown) => {
     if (isAxiosError(error)) console.log(error.response ?? error.message);
-    else if (error instanceof Error) console.log(error);
+    else if (error instanceof Error) console.log(error.message);
+    else console.log("Неизвестная ошибка: ", error);
   })
   .finally(() => {});
